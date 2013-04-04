@@ -396,33 +396,33 @@ echo "
 <link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/>
 </head>
 <body>
-" > index.html
+" > ~/public/index.html
     mailhash=`git config --global user.email | xargs echo -n | tr '[A-Z]' '[a-z]' | openssl md5 | sed -e 's/.* //'`
-    echo "<h2>${user}'s Git Achievements <img src='http://www.gravatar.com/avatar/${mailhash}'/></h2>" >> index.html
+    echo "<h2>${user}'s Git Achievements <img src='http://www.gravatar.com/avatar/${mailhash}'/></h2>" >> ~/public/index.html
 
     # STATS
-    cat git-achievements | grep 'unlock_achievement ' | grep -v ' sed ' | grep -v '\${' | sed -e 's/.*unlock_achievement //g' -e 's/^"//g' -e 's/"$//g' -e 's/\$power/X/g' -e 's/\$count/X/g' -e 's/\$hooks/X/g' | sort | awk -F"\" \"" '{ print "<li><div class=\"title\">" $1 "</div><div class=\"info\">" $2 "</div></li>" }' | link_to_git_docs > all.html
+    cat git-achievements | grep 'unlock_achievement ' | grep -v ' sed ' | grep -v '\${' | sed -e 's/.*unlock_achievement //g' -e 's/^"//g' -e 's/"$//g' -e 's/\$power/X/g' -e 's/\$count/X/g' -e 's/\$hooks/X/g' | sort | awk -F"\" \"" '{ print "<li><div class=\"title\">" $1 "</div><div class=\"info\">" $2 "</div></li>" }' | link_to_git_docs > ~/public/all.html
     total=`cat all.html | wc -l`
 
     unlockedCount=`clean_logged_achievements | awk '{ if (NR % 2 != 0) print $0 }' | sed -e 's/Apprentice //g' -e 's/Master //g' -e 's/(.*//g' | sort | uniq | wc -l`
     levels=`clean_logged_achievements | awk '{ if (NR % 2 != 0) print $0 }' | grep Level | sed -e 's/.* //g' -e 's/)//g' | awk '{ t=t+$0 } END { print t }'`
     onelevels=`clean_logged_achievements | awk '{ if (NR % 2 != 0) print $0 }' | wc -l`
     let points="${levels}"+"${onelevels}"
-    echo "Unlocked ${unlockedCount}/$total <a href=\"http://github.com/icefox/git-achievements\">Git Achievements</a> for $points points<br>" >> index.html
+    echo "Unlocked ${unlockedCount}/$total <a href=\"http://github.com/icefox/git-achievements\">Git Achievements</a> for $points points<br>" >> ~/public/index.html
 
     unlocked=`cat "${ACHIEVEMENTSLOGFILE}" | grep Unlocked | wc -l`
 
     # Unlocked Achievements
-    echo "<ul>" >> index.html
-    cat "${ACHIEVEMENTSLOGFILE}" | grep -ve '^$' | grep -v 'Git Achievement Unlocked!' | grep -v '*' | sed -e 's/^ *//g'  -e 's/ *$//g' | awk '{ if (NR % 2 != 0) printf "<li><div class=\"title\">" $0 "</div>"; else printf "  <div class=\"info\">" $0 "</div></li>\n" }' | link_to_git_docs | sort >> index.html
+    echo "<ul>" >> ~/public/index.html
+    cat "${ACHIEVEMENTSLOGFILE}" | grep -ve '^$' | grep -v 'Git Achievement Unlocked!' | grep -v '*' | sed -e 's/^ *//g'  -e 's/ *$//g' | awk '{ if (NR % 2 != 0) printf "<li><div class=\"title\">" $0 "</div>"; else printf "  <div class=\"info\">" $0 "</div></li>\n" }' | link_to_git_docs | sort >> ~/public/index.html
 
-    echo "</ul>" >> index.html
+    echo "</ul>" >> ~/public/index.html
 
     # Git Commands
-    echo 'Git commands sorted by usage:' >> index.html
-    echo "<pre style=\"text-align: left\">" >> index.html
-    cat  "${ACTIONLOGFILE}" | grep -v Date | grep -v 'git-dir' | awk '{ print $1 }' | sort | uniq -c | sort -nr >> index.html
-    echo "</pre>" >> index.html
+    echo 'Git commands sorted by usage:' >> ~/public/index.html
+    echo "<pre style=\"text-align: left\">" >> ~/public/index.html
+    cat  "${ACTIONLOGFILE}" | grep -v Date | grep -v 'git-dir' | awk '{ print $1 }' | sort | uniq -c | sort -nr >> ~/public/index.html
+    echo "</pre>" >> ~/public/index.html
 
     # Locked Achievements
     echo "<script type=\"text/javascript\">
@@ -434,51 +434,51 @@ function showLocked() {
 <a id=\"showlocked\" href=\"javascript:showLocked()\" >Show locked Achievements</a>
 <div id=\"locked\">
 There are $total Achievements. Some achievements can be leveled up depending on the number of times it is used (Used 2 times = level 1, 4 = level 2, 8 = level 3, 16 = level 4, 32 = level 5, etc)
-<ul>" >> index.html
+<ul>" >> ~/public/index.html
 
-    cat index.html | sed -e 's/Apprentice //g' -e 's/Master //g'> temp.html
-    cat all.html | while read line ;
+    cat ~/public/index.html | sed -e 's/Apprentice //g' -e 's/Master //g'> ~/public/temp.html
+    cat ~/public/all.html | while read line ;
     do
         stripedline=`echo $line | sed -e 's/<\/div>.*//g' -e 's/(.*//g' -e 's/Apprentice //g'`
-        grep "$stripedline" temp.html > /dev/null
+        grep "$stripedline" ~/public/temp.html > /dev/null
         if [ ! $? -eq 0 ] ; then
-            echo $line >> index.html
+            echo $line >> ~/public/index.html
         fi
     done
-    echo '</ul></div>' >> index.html
-    rm temp.html
-    rm all.html
+    echo '</ul></div>' >> ~/public/index.html
+    rm ~/public/temp.html
+    rm ~/public/all.html
 
-    echo "</body></html>" >> index.html
+    echo "</body></html>" >> ~/public/index.html
 
     # Update the RSS feed
-    echo '<?xml version="1.0" encoding="utf-8"?><rss version="2.0"><channel>' > index.rss
-    echo "<title>${user}'s Git Achievements</title>" >> index.rss
-    echo "<description></description>" >> index.rss
-    echo "<link></link>" >> index.rss
-    cat "${ACHIEVEMENTSLOGFILE}"  | grep -ve '^$' | grep -v 'Git Achievement Unlocked!' | grep -v '*' | sed -e 's/^ *//g'  -e 's/ *$//g' | awk '{ if (NR % 2 != 0) printf "<item><title>" $0 "</title>"; else printf "<description>" $0 "</description></item>\n" }' | tail -n 20 | sed '1!G;h;$!d' >> index.rss
-    echo '</channel></rss>' >> index.rss
+    echo '<?xml version="1.0" encoding="utf-8"?><rss version="2.0"><channel>' > ~/public/index.rss
+    echo "<title>${user}'s Git Achievements</title>" >> ~/public/index.rss
+    echo "<description></description>" >> ~/public/index.rss
+    echo "<link></link>" >> ~/public/index.rss
+    cat "${ACHIEVEMENTSLOGFILE}"  | grep -ve '^$' | grep -v 'Git Achievement Unlocked!' | grep -v '*' | sed -e 's/^ *//g'  -e 's/ *$//g' | awk '{ if (NR % 2 != 0) printf "<item><title>" $0 "</title>"; else printf "<description>" $0 "</description></item>\n" }' | tail -n 20 | sed '1!G;h;$!d' >> ~/public/index.rss
+    echo '</channel></rss>' >> ~/public/index.rss
 
-    abortcount=`git status | grep 'Changes to be committed' | wc -l`
-    if [ ! $abortcount -eq 0 ] ; then
-        echo "There are staged changes in the repository, updates let uncommitted"
-        return
-    fi
+    #abortcount=`git status | grep 'Changes to be committed' | wc -l`
+    #if [ ! $abortcount -eq 0 ] ; then
+    #    echo "There are staged changes in the repository, updates let uncommitted"
+    #    return
+    #fi
 
-    if [ ! "`git config --global achievement.upload`" = "true" ] ; then
-        echo "Global achievement.upload not set to true, updates left uncommited"
-        return
-    fi
+    #if [ ! "`git config --global achievement.upload`" = "true" ] ; then
+    #    echo "Global achievement.upload not set to true, updates left uncommited"
+    #    return
+    #fi
 
-    echo "Adding new achievements and publishing to origin."
-    git add index.html index.rss
-    if [ -z "${1}" ] ; then
-        message="Publishing updated achievement"
-    else
-        message="New achievement $1"
-    fi
-    git commit -qm "${message}"
-    git push origin gh-pages
+    #echo "Adding new achievements and publishing to origin."
+    #git add index.html index.rss
+    #if [ -z "${1}" ] ; then
+    #    message="Publishing updated achievement"
+    #else
+    #    message="New achievement $1"
+    #fi
+    #git commit -qm "${message}"
+    #git push origin gh-pages
 }
 
 ACTIONLOGFILE="$HOME/.git-achievements-action.log"
